@@ -1,5 +1,11 @@
 # Identifying State Nodes
 
+:::warning These XState v4 docs are no longer maintained
+
+XState v5 is out now! [Read more about XState v5](https://stately.ai/blog/2023-12-01-xstate-v5) and [check out the XState v5 docs](https://stately.ai/docs/xstate).
+
+:::
+
 [:rocket: Quick Reference](#quick-reference)
 
 By default, a state node's `id` is its delimited full path. You can use this default `id` to specify a state node:
@@ -54,11 +60,11 @@ const optionsMachine = createMachine({
 
 By default, relative targets are [internal transitions](./transitions.md#internal-transitions), which means the parent state will _not_ exit and reenter. You can make relative targets external transitions by specifying `internal: false`:
 
-```js {4}
+```js {5}
 // ...
 on: {
   SELECT_FIRST: {
-    target: { target: '.first' },
+    target: '.first',
     internal: false // external transition, will exit/reenter parent state node
   }
 }
