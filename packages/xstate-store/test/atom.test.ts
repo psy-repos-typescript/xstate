@@ -88,6 +88,33 @@ it('can create a combined atom (get API)', () => {
   numAtom.set(5);
 });
 
+it('allows updates to a computed dependency during a subscription callback', () => {
+  const atom = createAtom({ a: 0, b: 0 });
+
+  const a = createAtom(() => atom.get().a);
+  a.subscribe(() => atom.set((ctx) => ({ ...ctx, b: ctx.a })));
+
+  atom.set((ctx) => ({ ...ctx, a: ctx.a + 1 }));
+  atom.set((ctx) => ({ ...ctx, a: ctx.a + 1 }));
+  atom.set((ctx) => ({ ...ctx, a: ctx.a + 1 }));
+
+  expect(a.get()).toBe(3);
+  expect(atom.get().a).toBe(3);
+  expect(atom.get().b).toBe(3);
+});
+
+it('does not loop when updating a computed dependency which affects an atoms own state', () => {
+  const count = createAtom(0);
+  const a = createAtom(() => count.get());
+
+  a.subscribe(() => count.set((val) => val + 1));
+
+  count.set((val) => val + 1);
+
+  expect(a.get()).toBe(2);
+  expect(count.get()).toBe(2);
+});
+
 it('works with a mix of atoms and stores', () => {
   const countAtom = createAtom(0);
   const store = createStore({
@@ -233,6 +260,26 @@ it('works with selectors', () => {
   store.trigger.increment();
 
   expect(combinedAtom.get()).toBe(2);
+});
+
+it('allows sending events to the store during a selector subscription', () => {
+  const store = createStore({
+    context: { a: 0, b: 0 },
+    on: {
+      a: (context) => ({ ...context, a: context.a + 1 }),
+      b: (context) => ({ ...context, b: context.b + 1 })
+    }
+  });
+
+  const a = store.select((context) => context.a);
+  a.subscribe(() => store.trigger.b());
+
+  store.trigger.a();
+  store.trigger.a();
+  store.trigger.a();
+
+  expect(store.get().context.a).toBe(3);
+  expect(store.get().context.b).toBe(3);
 });
 
 it('works with selectors (get API)', () => {
